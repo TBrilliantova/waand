@@ -1,20 +1,98 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# waand-ai-studio
 
-# Run and deploy your AI Studio app
+React + TypeScript app created from Google AI Studio, built with Vite.
 
-This contains everything you need to run your app locally.
+## Framework
 
-View your app in AI Studio: https://ai.studio/apps/64ed9ca9-9aef-4f03-97c1-0926b0ca991a
+- Framework: React 19
+- Build tool: Vite 6
+- Package manager: npm (`package-lock.json` present)
 
-## Run Locally
+## Prerequisites
 
-**Prerequisites:**  Node.js
+- Node.js 20+ (recommended: latest LTS)
+- npm 10+
 
+## Local setup
 
 1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+
+```bash
+npm install
+```
+
+2. Create your local env file:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Add your Gemini key in `.env.local`:
+
+```bash
+GEMINI_API_KEY=your_real_key_here
+```
+
+4. Start dev server:
+
+```bash
+npm run dev
+```
+
+5. Build for production:
+
+```bash
+npm run build
+```
+
+## Environment variables
+
+- `GEMINI_API_KEY` (required): API key used by `@google/genai`.
+- `VITE_GEMINI_API_KEY` (optional): alternative key name; build config maps it to `process.env.GEMINI_API_KEY`.
+
+Never commit real secrets. Keep them in local `.env*` files and deployment platform environment settings.
+
+## Deploy
+
+### Option A: Vercel (recommended for this project)
+
+This is a Vite static frontend, so deploy as a static site on Vercel.
+
+1. Import the GitHub repo in Vercel.
+2. Vercel should auto-detect Vite.
+3. Confirm build settings:
+   - Build command: `npm run build`
+   - Output directory: `dist`
+4. Add environment variable in Vercel project settings:
+   - `GEMINI_API_KEY` = your real key
+5. Deploy.
+
+### Option B: Netlify (alternative)
+
+1. Import the GitHub repo in Netlify.
+2. Build command: `npm run build`
+3. Publish directory: `dist`
+4. Set `GEMINI_API_KEY` in Netlify environment variables.
+
+## GitHub push
+
+If this folder is already a git repo, run:
+
+```bash
+git add .
+git commit -m "chore: clean repo for GitHub and deployment"
+git branch -M main
+git remote add origin https://github.com/<your-username>/<your-repo>.git
+git push -u origin main
+```
+
+If there is no `.git` folder yet, initialize first:
+
+```bash
+git init
+git add .
+git commit -m "chore: initial commit"
+git branch -M main
+git remote add origin https://github.com/<your-username>/<your-repo>.git
+git push -u origin main
+```
