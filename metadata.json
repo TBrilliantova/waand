@@ -1,0 +1,5 @@
+{
+  "name": "waand — AI Team for Product Designers",
+  "description": "A microservice prototype for product designers featuring specialized AI agents for concepts, brainstorming, UX audits, and handoff documentation.",
+  "requestFramePermissions": []
+}
