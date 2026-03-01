@@ -1,57 +1,125 @@
-import { GoogleGenAI } from "@google/genai";
-
 export type AgentType = 'brainstorm' | 'ux-audit' | 'handoff';
 
-const AGENT_PROMPTS: Record<AgentType, string> = {
-  'brainstorm': `You are the 'Brainstorm' agent for product designers.
-Your task is to expand on an idea, critique it, and then synthesize it into one strong, refined option.
-Structure your response as:
-1. Expansion: 3-5 diverse ideas based on the input.
-2. Critique: Honest assessment of the pros and cons of these ideas.
-3. Synthesis: One final, high-fidelity concept that combines the best elements.
+const USE_MOCK = String(import.meta.env.VITE_USE_MOCK ?? 'true').toLowerCase() === 'true';
 
-Output in Markdown format with clear headings and bullet points. Be practical and professional.`,
+function mockOutput(agent: AgentType, prompt: string): string {
+  const normalizedPrompt = prompt?.trim() || 'Demo request with attachments';
 
-  'ux-audit': `You are the 'UX Audit' agent for product designers.
-Your task is to check the quality of a design (consistency, accessibility, usability) and prioritize fixes.
-Structure your response as:
-1. Audit Summary: Overall quality score and key observations.
-2. Detailed Findings: Specific issues related to consistency, accessibility, and usability.
-3. Prioritized Fixes: A list of recommended actions ordered by impact and effort.
+  if (agent === 'brainstorm') {
+    return `## Concepts
 
-Output in Markdown format with clear headings and bullet points. Be practical and professional.`,
+### 1) Instant Onboarding Overlay
+- Show a 3-step walkthrough tailored to first-time users.
+- Trigger contextual tips based on the first action in session.
+- Use one primary CTA to reduce decision fatigue.
 
-  'handoff': `You are the 'Handoff Pack' agent for product designers.
-Your task is to generate dev-ready specs, including states, edge cases, and acceptance criteria.
-Structure your response as:
-1. Component/Feature Overview.
-2. Interaction States: Default, Hover, Active, Disabled, Loading, Error.
-3. Edge Cases: Empty states, long text, slow network, etc.
-4. Acceptance Criteria: Clear 'Given/When/Then' or bullet points for developers.
+### 2) Smart Starter Templates
+- Preload templates by intent (research, audit, handoff).
+- Include editable placeholders for team context.
+- Add estimated completion time to each template.
 
-Output in Markdown format with clear headings and bullet points. Be practical and professional.`
-};
+### 3) Progressive Personalization
+- Ask one preference question after each meaningful action.
+- Adapt wording and examples to user role over time.
+- Keep controls reversible with a clear reset option.
+
+## Brainstorm
+- Prompt interpreted as: "${normalizedPrompt}".
+- Best direction: combine templates + contextual tips for faster time-to-value.
+- Risk: too many options can slow new users.
+- Mitigation: limit initial choices to three high-confidence paths.
+
+## Recommended Direction
+- Start with Smart Starter Templates.
+- Layer in one contextual tip per screen.
+- Measure completion rate and first-value time before adding more complexity.
+`;
+  }
+
+  if (agent === 'ux-audit') {
+    return `## UX Audit
+
+### Audit Summary
+- Overall quality score: **7.8 / 10**
+- Strong visual hierarchy and clear sections.
+- Main issue: action density in the workspace side panels.
+
+### Detailed Findings
+1. Consistency
+- Button sizes vary between panels without clear semantic reason.
+- Some helper texts use different tone and punctuation styles.
+
+2. Accessibility
+- Contrast is borderline on muted gray labels in sidebars.
+- Some icon-only buttons need explicit aria-label checks.
+
+3. Usability
+- First-run path is clear, but error recovery messaging can be more specific.
+- Attachment actions are discoverable but could use tighter grouping.
+
+### Prioritized Fixes
+1. Raise contrast on muted labels and helper text (high impact, low effort).
+2. Standardize button sizing tokens by intent (high impact, medium effort).
+3. Add explicit recovery guidance after failed generation (medium impact, low effort).
+4. Group attachment controls under a labeled section (medium impact, low effort).
+
+Context used: "${normalizedPrompt}".
+`;
+  }
+
+  return `## Handoff Pack
+
+### Component / Feature Overview
+- Feature: AI-assisted output generation workspace.
+- Primary goal: transform a prompt into structured markdown output.
+- Input channels: text prompt + optional attachments.
+
+### Interaction States
+1. Default
+- Agent selected, empty prompt, Run disabled.
+
+2. Hover / Active
+- Buttons and cards show affordance via contrast and elevation changes.
+
+3. Loading
+- Generation state shows spinner and progress indicators.
+
+4. Error
+- Inline recovery panel appears with retry action.
+
+5. Ready
+- Markdown output renders with version label in right rail.
+
+### Edge Cases
+- Empty prompt with attachments only.
+- Very long prompt (>2,000 chars).
+- Slow network or API timeout.
+- Missing server key in live mode.
+
+### Acceptance Criteria
+- Given a selected agent and valid input, when Run is clicked, then loading is shown before output/error state.
+- Given API failure, when generation fails, then user sees error state and can retry.
+- Given mock mode enabled, when Run is clicked, then deterministic markdown output is returned without external API calls.
+
+Context used: "${normalizedPrompt}".
+`;
+}
 
 export async function generateAgentOutput(agent: AgentType, prompt: string) {
-  const apiKey = process.env.GEMINI_API_KEY || "";
-  if (!apiKey) {
-    throw new Error("Missing GEMINI_API_KEY. Add it to your .env.local file.");
+  if (USE_MOCK) {
+    return mockOutput(agent, prompt);
   }
 
-  const ai = new GoogleGenAI({ apiKey });
+  const response = await fetch('/api/generate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({agent, prompt}),
+  });
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: `User Input: ${prompt}`,
-      config: {
-        systemInstruction: AGENT_PROMPTS[agent],
-      },
-    });
-
-    return response.text;
-  } catch (error) {
-    console.error("Gemini API Error:", error);
-    throw error;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.error || 'Failed to generate output');
   }
+
+  return data.output || '';
 }

@@ -6,12 +6,14 @@ React + TypeScript app created from Google AI Studio, built with Vite.
 
 - Framework: React 19
 - Build tool: Vite 6
-- Package manager: npm (`package-lock.json` present)
+- Deploy target: Vercel (static frontend + serverless API)
 
-## Prerequisites
+## Architecture
 
-- Node.js 20+ (recommended: latest LTS)
-- npm 10+
+- Client UI: `src/*` (unchanged UI flow/states)
+- Data source switch: `VITE_USE_MOCK`
+- Live generation endpoint: `POST /api/generate` (Vercel serverless function)
+- Gemini key usage: server-side only via `process.env.GEMINI_API_KEY`
 
 ## Local setup
 
@@ -21,27 +23,36 @@ React + TypeScript app created from Google AI Studio, built with Vite.
 npm install
 ```
 
-2. Create your local env file:
+2. Create local env:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. Add your Gemini key in `.env.local`:
+3. Choose mode in `.env.local`:
 
 ```bash
+# mock mode (no secrets required)
+VITE_USE_MOCK=true
+```
+
+or
+
+```bash
+# live mode (serverless Gemini)
+VITE_USE_MOCK=false
 GEMINI_API_KEY=your_real_key_here
 ```
 
-4. Start dev server:
+4. Run dev server:
 
 ```bash
 npm run dev
 ```
 
-The app runs on `http://localhost:3001/`.
+App URL: `http://localhost:3001/`
 
-5. Build for production:
+5. Build production bundle:
 
 ```bash
 npm run build
@@ -49,52 +60,40 @@ npm run build
 
 ## Environment variables
 
-- `GEMINI_API_KEY` (required): API key used by `@google/genai`.
-- `VITE_GEMINI_API_KEY` (optional): alternative key name; build config maps it to `process.env.GEMINI_API_KEY`.
+- `VITE_USE_MOCK` (required):
+  - `true`: deterministic mock markdown outputs in client, no Gemini call.
+  - `false`: client calls `/api/generate`; Gemini runs on server.
+- `VITE_APP_URL` (optional): app URL for client-side links.
+- `GEMINI_API_KEY` (server-only): required only when `VITE_USE_MOCK=false`.
 
-Never commit real secrets. Keep them in local `.env*` files and deployment platform environment settings.
+## Deploy on Vercel
 
-## Deploy
-
-### Option A: Vercel (recommended for this project)
-
-This is a Vite static frontend, so deploy as a static site on Vercel.
-
-1. Import the GitHub repo in Vercel.
-2. Vercel should auto-detect Vite.
-3. Confirm build settings:
+1. Push repo to GitHub.
+2. In Vercel, import the GitHub repo.
+3. Build settings:
    - Build command: `npm run build`
    - Output directory: `dist`
-4. Add environment variable in Vercel project settings:
-   - `GEMINI_API_KEY` = your real key
+4. Set environment variables:
+   - Mock mode: `VITE_USE_MOCK=true`
+   - Live mode: `VITE_USE_MOCK=false` and `GEMINI_API_KEY=...`
+   - Optional: `VITE_APP_URL=https://your-domain.vercel.app`
 5. Deploy.
-
-### Option B: Netlify (alternative)
-
-1. Import the GitHub repo in Netlify.
-2. Build command: `npm run build`
-3. Publish directory: `dist`
-4. Set `GEMINI_API_KEY` in Netlify environment variables.
 
 ## GitHub push
 
-If this folder is already a git repo, run:
+If `.git` already exists:
 
 ```bash
 git add .
-git commit -m "chore: clean repo for GitHub and deployment"
+git commit -m "feat: add secure server-side Gemini + mock mode"
 git branch -M main
 git remote add origin https://github.com/<your-username>/<your-repo>.git
 git push -u origin main
 ```
 
-If there is no `.git` folder yet, initialize first:
+If remote `origin` already exists, update it:
 
 ```bash
-git init
-git add .
-git commit -m "chore: initial commit"
-git branch -M main
-git remote add origin https://github.com/<your-username>/<your-repo>.git
+git remote set-url origin https://github.com/<your-username>/<your-repo>.git
 git push -u origin main
 ```
