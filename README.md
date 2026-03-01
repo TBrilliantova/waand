@@ -39,6 +39,8 @@ GEMINI_API_KEY=your_real_key_here
 npm run dev
 ```
 
+The app runs on `http://localhost:3001/`.
+
 5. Build for production:
 
 ```bash

@@ -26,7 +26,8 @@ import {
 import Markdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { generateAgentOutput, AgentType } from './services/geminiService';
+import { generateAgentOutput } from './services/geminiService';
+import type { AgentType } from './services/geminiService';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

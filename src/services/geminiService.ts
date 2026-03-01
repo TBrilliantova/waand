@@ -1,6 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+import { GoogleGenAI } from "@google/genai";
 
 export type AgentType = 'brainstorm' | 'ux-audit' | 'handoff';
 
@@ -35,6 +33,13 @@ Output in Markdown format with clear headings and bullet points. Be practical an
 };
 
 export async function generateAgentOutput(agent: AgentType, prompt: string) {
+  const apiKey = process.env.GEMINI_API_KEY || "";
+  if (!apiKey) {
+    throw new Error("Missing GEMINI_API_KEY. Add it to your .env.local file.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
